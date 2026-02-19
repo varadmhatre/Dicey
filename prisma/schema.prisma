@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model User {
+  id               String      @id @default(cuid())
+  clerkId          String      @unique
+  email            String      @unique
+  name             String?
+  avatarUrl        String?
+  role             Role        @default(USER)
+  passwordResetAt  DateTime?
+  wishlists        Wishlist[]
+  reviews          Review[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model Product {
+  id              String        @id @default(cuid())
+  slug            String        @unique
+  title           String
+  description     String
+  priceInCents    Int
+  images          String[]
+  category        String
+  redirectUrl     String
+  status          ProductStatus @default(PUBLISHED)
+  inventoryCount  Int           @default(0)
+  ratingAverage   Float         @default(0)
+  ratingCount     Int           @default(0)
+  wishlistedBy    Wishlist[]
+  reviews         Review[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([category])
+  @@index([title])
+}
+
+model Wishlist {
+  id         String   @id @default(cuid())
+  userId     String
+  productId  String
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  rating     Int
+  title      String?
+  body       String
+  userId     String
+  productId  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([userId])
+}
