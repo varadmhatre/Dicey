@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Noir-Store Admin</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar">
+      <h1>Admin · Register New Product</h1>
+      <a href="./product-detail.html" class="btn secondary">Open PDP</a>
+    </div>
+    <form id="productForm" class="card grid">
+      <div class="grid grid-2">
+        <div><label>Title</label><input id="title" required /></div>
+        <div><label>Category</label><input id="category" required /></div>
+      </div>
+      <div class="grid grid-2">
+        <div><label>Price (cents)</label><input id="price" type="number" min="1" required /></div>
+        <div><label>Amazon Redirect URL</label><input id="redirect" type="url" required /></div>
+      </div>
+      <div><label>Description</label><textarea id="description" rows="4" required></textarea></div>
+      <div><label>Image URLs (one per line)</label><textarea id="images" rows="5" required></textarea></div>
+      <button type="submit">Create Product</button>
+      <p class="small" id="status"></p>
+    </form>
+  </main>
+  <script src="./app.js"></script>
+  <script>
+    const form = document.getElementById('productForm');
+    const status = document.getElementById('status');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const products = NoirStore.readProducts();
+      const title = document.getElementById('title').value;
+      const slugBase = NoirStore.slugify(title);
+      const count = products.filter(p => p.slug.startsWith(slugBase)).length;
+      const slug = count ? `${slugBase}-${count + 1}` : slugBase;
+
+      const product = {
+        id: crypto.randomUUID(),
+        slug,
+        title,
+        category: document.getElementById('category').value,
+        price: Number(document.getElementById('price').value),
+        description: document.getElementById('description').value,
+        images: document.getElementById('images').value.split('\n').map(v => v.trim()).filter(Boolean),
+        redirect_url: document.getElementById('redirect').value,
+        reviews: []
+      };
+
+      products.push(product);
+      NoirStore.writeProducts(products);
+      status.textContent = `Saved. Open PDP: product-detail.html?slug=${slug}`;
+      form.reset();
+    });
+  </script>
+</body>
+</html>
