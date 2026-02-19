@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Noir-Store</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar" style="margin-bottom: 30px;">
+      <div>
+        <p class="small" style="margin:0;">Noir-Store</p>
+        <h1 style="margin:0;">Minimal Black & White Commerce</h1>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <a class="btn secondary" href="./admin-product-upload.html">Admin</a>
+      </div>
+    </header>
+
+    <section class="card" style="margin-bottom: 22px;">
+      <form id="searchForm" class="grid grid-2" style="align-items:end;">
+        <div>
+          <label>Search products</label>
+          <input id="search" placeholder="Search title or category" />
+        </div>
+        <div>
+          <label>Category</label>
+          <select id="category">
+            <option value="">All categories</option>
+          </select>
+        </div>
+      </form>
+    </section>
+
+    <section>
+      <div id="products" class="grid grid-2"></div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+  <script>
+    const productsEl = document.getElementById('products');
+    const searchEl = document.getElementById('search');
+    const categoryEl = document.getElementById('category');
+
+    let timer = null;
+
+    function render(products) {
+      productsEl.innerHTML = products.map(product => `
+        <article class="card">
+          <img src="${product.images[0]}" alt="${product.title}" style="width:100%;height:260px;object-fit:cover;border-radius:12px;border:.5px solid var(--border);" />
+          <p class="small" style="margin:12px 0 4px;">${product.category}</p>
+          <h3 style="margin:0 0 8px;">${product.title}</h3>
+          <p class="small" style="margin:0 0 10px;">$${(product.price/100).toFixed(2)}</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a class="btn secondary" href="./product-detail.html?slug=${product.slug}">View Product</a>
+            <a class="btn" href="${product.redirect_url}" target="_blank" rel="noopener noreferrer sponsored">Buy Now</a>
+          </div>
+        </article>
+      `).join('');
+
+      if (!products.length) {
+        productsEl.innerHTML = '<p class="small">No products found.</p>';
+      }
+    }
+
+    function filterAndRender() {
+      const query = searchEl.value.trim().toLowerCase();
+      const category = categoryEl.value;
+      const all = NoirStore.readProducts();
+      const filtered = all.filter((p) => {
+        const text = `${p.title} ${p.category}`.toLowerCase();
+        const byQuery = !query || text.includes(query);
+        const byCategory = !category || p.category === category;
+        return byQuery && byCategory;
+      });
+      render(filtered);
+    }
+
+    const allProducts = NoirStore.readProducts();
+    [...new Set(allProducts.map(p => p.category))].forEach((cat) => {
+      const option = document.createElement('option');
+      option.value = cat;
+      option.textContent = cat;
+      categoryEl.appendChild(option);
+    });
+
+    searchEl.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(filterAndRender, 250);
+    });
+
+    categoryEl.addEventListener('change', filterAndRender);
+
+    filterAndRender();
+  </script>
+</body>
+</html>
